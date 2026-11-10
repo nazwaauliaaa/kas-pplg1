@@ -16,16 +16,22 @@ import {
   formatRupiah,
   verifyTreasurerPassword,
 } from './kas-logic.js';
+import { createCloudSync } from './firebase-sync.js';
 
 let state = loadState();
 let currentFilter = 'all';
 let searchQuery = '';
 let toastTimer = null;
 let isTreasurerUnlocked = false;
-let pendingProtectedTab = null;
+let pendingAuthTarget = null;
+let cloudSync = null;
 
 // Elements
 const classNameHeading = document.getElementById('classNameHeading');
+const treasurerModeBtn = document.getElementById('treasurerModeBtn');
+const treasurerModeLabel = document.getElementById('treasurerModeLabel');
+const syncStatusText = document.getElementById('syncStatusText');
+const viewOnlyNotice = document.getElementById('viewOnlyNotice');
 const totalBalanceEl = document.getElementById('totalBalance');
 const totalIncomeEl = document.getElementById('totalIncome');
 const totalExpenseEl = document.getElementById('totalExpense');
@@ -104,14 +110,26 @@ function loadState() {
   }
 }
 
-function saveAndRender(nextState) {
+function persistLocal(nextState) {
   state = nextState;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
     showToast('Gagal menyimpan ke memori HP');
   }
+}
+
+function saveLocalAndRender(nextState) {
+  persistLocal(nextState);
   render();
+}
+
+function saveAndRender(nextState) {
+  persistLocal(nextState);
+  render();
+  if (cloudSync?.enabled) {
+    cloudSync.pushState(state);
+  }
 }
 
 function showToast(message) {
@@ -200,9 +218,10 @@ function renderChecklist(activeWeek, weekFee) {
     const isPaid = Boolean(payment?.paid);
 
     const row = document.createElement('div');
-    row.className = `student-row${isPaid ? ' paid' : ''}`;
+    row.className = `student-row${isPaid ? ' paid' : ''}${isTreasurerUnlocked ? '' : ' readonly'}`;
     row.setAttribute('role', 'checkbox');
     row.setAttribute('aria-checked', String(isPaid));
+    row.setAttribute('aria-disabled', String(!isTreasurerUnlocked));
     row.tabIndex = 0;
 
     const info = document.createElement('div');
@@ -234,6 +253,10 @@ function renderChecklist(activeWeek, weekFee) {
     row.appendChild(checkbox);
 
     const handleToggle = () => {
+      if (!isTreasurerUnlocked) {
+        showToast('Mode Lihat: ketuk "Bendahara" di atas untuk mengedit');
+        return;
+      }
       const next = togglePayment(state, activeWeek.id, student.id);
       const nowPaid = Boolean(
         next.weeks.find((w) => w.id === activeWeek.id)?.payments?.[student.id]?.paid
@@ -403,25 +426,54 @@ function updateTreasurerLockUI() {
   treasurerLockIcons.forEach((iconEl) => {
     iconEl.innerHTML = iconSvg;
   });
+  treasurerModeBtn.classList.toggle('unlocked', isTreasurerUnlocked);
+  treasurerModeLabel.textContent = isTreasurerUnlocked ? 'Kunci' : 'Bendahara';
+  viewOnlyNotice.classList.toggle('hidden', isTreasurerUnlocked);
+}
+
+function openTreasurerAuth(target = null) {
+  pendingAuthTarget = target;
+  treasurerPasswordInput.value = '';
+  treasurerAuthError.textContent = '';
+  treasurerAuthError.classList.add('hidden');
+  treasurerAuthModal.showModal();
+  setTimeout(() => treasurerPasswordInput.focus(), 50);
+}
+
+function lockTreasurerMode() {
+  isTreasurerUnlocked = false;
+  updateTreasurerLockUI();
+  switchTab('tabChecklist');
+  render();
+  showToast('Mode Bendahara dikunci (Mode Lihat)');
+}
+
+function openNewWeekDialog() {
+  newWeekLabelInput.value = `Minggu ${state.weeks.length + 1}`;
+  newWeekDateInput.value = new Date().toISOString().slice(0, 10);
+  newWeekModal.showModal();
 }
 
 // Navigation tabs
-const PROTECTED_TABS = new Set(['tabIncomes', 'tabExpenses']);
+const PROTECTED_TABS = new Set(['tabIncomes', 'tabExpenses', 'tabSettings']);
 
 navButtons.forEach((btn) => {
   btn.addEventListener('click', () => {
     const target = btn.dataset.tab;
     if (PROTECTED_TABS.has(target) && !isTreasurerUnlocked) {
-      pendingProtectedTab = target;
-      treasurerPasswordInput.value = '';
-      treasurerAuthError.textContent = '';
-      treasurerAuthError.classList.add('hidden');
-      treasurerAuthModal.showModal();
-      setTimeout(() => treasurerPasswordInput.focus(), 50);
+      openTreasurerAuth({ type: 'tab', tab: target });
       return;
     }
     switchTab(target);
   });
+});
+
+treasurerModeBtn.addEventListener('click', () => {
+  if (isTreasurerUnlocked) {
+    lockTreasurerMode();
+  } else {
+    openTreasurerAuth(null);
+  }
 });
 
 treasurerAuthForm.addEventListener('submit', (e) => {
@@ -430,55 +482,60 @@ treasurerAuthForm.addEventListener('submit', (e) => {
     isTreasurerUnlocked = true;
     updateTreasurerLockUI();
     treasurerAuthModal.close();
-    const targetTab = pendingProtectedTab || 'tabExpenses';
-    pendingProtectedTab = null;
-    switchTab(targetTab);
-    showToast('Akses bendahara dibuka');
+    if (cloudSync?.enabled && !cloudSync.hasRemoteDoc()) {
+      cloudSync.pushState(state);
+    }
+    const target = pendingAuthTarget;
+    pendingAuthTarget = null;
+    if (target?.type === 'tab') {
+      switchTab(target.tab);
+    } else if (target?.type === 'newWeek') {
+      openNewWeekDialog();
+    }
+    render();
+    showToast('Mode Bendahara aktif');
   } else {
-    treasurerAuthError.textContent = 'Password salah. Hanya bendahara yang bisa membuka menu ini.';
+    treasurerAuthError.textContent = 'Password salah. Hanya bendahara yang bisa mengedit.';
     treasurerAuthError.classList.remove('hidden');
     treasurerPasswordInput.select();
   }
 });
 
 cancelTreasurerAuthBtn.addEventListener('click', () => {
-  pendingProtectedTab = null;
+  pendingAuthTarget = null;
   treasurerAuthModal.close();
 });
 
 lockTreasurerButtons.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    isTreasurerUnlocked = false;
-    updateTreasurerLockUI();
-    switchTab('tabChecklist');
-    showToast('Menu bendahara dikunci');
-  });
+  btn.addEventListener('click', lockTreasurerMode);
 });
 
-// Week switching
+// Week switching (local viewing only)
 weekSelect.addEventListener('change', (e) => {
-  saveAndRender({ ...state, activeWeekId: e.target.value });
+  saveLocalAndRender({ ...state, activeWeekId: e.target.value });
 });
 
 prevWeekBtn.addEventListener('click', () => {
   const idx = state.weeks.findIndex((w) => w.id === state.activeWeekId);
   if (idx > 0) {
-    saveAndRender({ ...state, activeWeekId: state.weeks[idx - 1].id });
+    saveLocalAndRender({ ...state, activeWeekId: state.weeks[idx - 1].id });
   }
 });
 
 nextWeekBtn.addEventListener('click', () => {
   const idx = state.weeks.findIndex((w) => w.id === state.activeWeekId);
   if (idx >= 0 && idx < state.weeks.length - 1) {
-    saveAndRender({ ...state, activeWeekId: state.weeks[idx + 1].id });
+    saveLocalAndRender({ ...state, activeWeekId: state.weeks[idx + 1].id });
   }
 });
 
 // New week modal
 openNewWeekBtn.addEventListener('click', () => {
-  newWeekLabelInput.value = `Minggu ${state.weeks.length + 1}`;
-  newWeekDateInput.value = new Date().toISOString().slice(0, 10);
-  newWeekModal.showModal();
+  if (!isTreasurerUnlocked) {
+    openTreasurerAuth({ type: 'newWeek' });
+    return;
+  }
+  openNewWeekDialog();
 });
 
 cancelNewWeekBtn.addEventListener('click', () => {
@@ -623,6 +680,32 @@ resetDataBtn.addEventListener('click', () => {
   }
 });
 
+// Cloud Sync (Firebase Firestore)
+const SYNC_STATUS_LABELS = {
+  local: '• Lokal',
+  connecting: '• Menghubungkan...',
+  uninitialized: '• Siap Sync',
+  saving: '• Menyimpan...',
+  synced: '• Live Sync',
+  offline: '• Offline',
+};
+
+async function initCloudSync() {
+  cloudSync = await createCloudSync({
+    onStatusChange: (status) => {
+      syncStatusText.textContent = SYNC_STATUS_LABELS[status] || '';
+    },
+    onRemoteState: (remoteState) => {
+      const currentViewedWeekId = state.activeWeekId;
+      const keepViewedWeek = remoteState.weeks.some((w) => w.id === currentViewedWeekId);
+      const merged = keepViewedWeek
+        ? { ...remoteState, activeWeekId: currentViewedWeekId }
+        : remoteState;
+      saveLocalAndRender(merged);
+    },
+  });
+}
+
 // Register PWA Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -630,5 +713,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+updateTreasurerLockUI();
 render();
+initCloudSync();
 

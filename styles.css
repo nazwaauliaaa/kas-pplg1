@@ -93,6 +93,33 @@ body {
   transform: scale(0.97);
 }
 
+.treasurer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.treasurer-pill.unlocked {
+  background: rgba(160, 224, 239, 0.28);
+  border-color: rgba(160, 224, 239, 0.7);
+}
+
+.inline-lock {
+  display: inline-flex;
+  align-items: center;
+}
+
+.inline-lock svg {
+  width: 14px;
+  height: 14px;
+}
+
+.sync-status {
+  font-size: 11px;
+  opacity: 0.85;
+  margin-left: 4px;
+}
+
 .balance-block {
   margin: 14px 0;
 }
@@ -288,6 +315,26 @@ body {
 
 .student-row:active {
   transform: scale(0.99);
+}
+
+.view-only-notice {
+  background: #e2f3fa;
+  color: var(--primary-dark);
+  border: 1px solid #b8e3f4;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.student-row.readonly {
+  cursor: default;
+}
+
+.student-row.readonly:active {
+  transform: none;
 }
 
 .student-row.paid {

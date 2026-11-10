@@ -19,6 +19,7 @@ import {
   buildWhatsAppReport,
   verifyTreasurerPassword,
 } from '../kas-logic.js';
+import { isFirebaseConfigured } from '../firebase-sync.js';
 
 test('createInitialState starts with 40 PPLG 1 students and Rp600.000 carryover balance', () => {
   const state = createInitialState();
@@ -155,4 +156,10 @@ test('verifyTreasurerPassword accepts only bendahara123', () => {
   assert.equal(verifyTreasurerPassword('bendahara123'), true);
   assert.equal(verifyTreasurerPassword('salah'), false);
   assert.equal(verifyTreasurerPassword(''), false);
+});
+
+test('isFirebaseConfigured validates required config fields', () => {
+  assert.equal(isFirebaseConfigured(null), false);
+  assert.equal(isFirebaseConfigured({}), false);
+  assert.equal(isFirebaseConfigured({ apiKey: 'abc', projectId: 'kas-pplg1' }), true);
 });

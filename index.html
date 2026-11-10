@@ -17,10 +17,21 @@
       <header class="hero-card">
         <div class="hero-top">
           <h1 id="classNameHeading">Kas Kelas</h1>
+          <button type="button" class="btn-icon treasurer-pill" id="treasurerModeBtn">
+            <span class="treasurer-lock-icon inline-lock" aria-hidden="true">
+              <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="11" width="16" height="10" rx="2.5"></rect>
+                <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+              </svg>
+            </span>
+            <span id="treasurerModeLabel">Bendahara</span>
+          </button>
         </div>
 
         <div class="balance-block">
-          <span class="balance-label">Total Saldo Kas Saat Ini</span>
+          <span class="balance-label">
+            Total Saldo Kas Saat Ini <span id="syncStatusText" class="sync-status"></span>
+          </span>
           <div class="balance-amount" id="totalBalance">Rp0</div>
         </div>
 
@@ -82,6 +93,9 @@
             </div>
           </div>
 
+          <div id="viewOnlyNotice" class="view-only-notice">
+            Mode Lihat — hanya Bendahara yang dapat mengedit data.
+          </div>
           <div id="checklistContainer" class="checklist-list"></div>
         </section>
 
@@ -191,8 +205,18 @@
           <div id="expensesList" class="stack-list"></div>
         </section>
 
-        <!-- TAB 3: SISWA & PENGATURAN -->
+        <!-- TAB 4: SISWA & PENGATURAN -->
         <section id="tabSettings" class="tab-panel">
+          <div class="treasurer-banner">
+            <span>Mode Bendahara Terbuka</span>
+            <button type="button" class="btn-mini lock-treasurer-btn">
+              <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="4" y="11" width="16" height="10" rx="2.5"></rect>
+                <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+              </svg>
+              Kunci Kembali
+            </button>
+          </div>
           <div class="card">
             <h2>Tambah Siswa</h2>
             <form id="addStudentsForm" class="stack-form">
@@ -288,11 +312,11 @@
           </span>
           <span>Pengeluaran</span>
         </button>
-        <button type="button" class="nav-btn" data-tab="tabSettings">
-          <span class="nav-icon" aria-hidden="true">
+        <button type="button" class="nav-btn" data-tab="tabSettings" id="settingsNavBtn">
+          <span class="nav-icon treasurer-lock-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.77 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"></path>
+              <rect x="4" y="11" width="16" height="10" rx="2.5"></rect>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
             </svg>
           </span>
           <span>Siswa & Data</span>
@@ -330,7 +354,7 @@
           Khusus Bendahara
         </h3>
         <p class="modal-desc">
-          Masukkan password bendahara untuk membuka dan mengedit menu Pemasukan & Pengeluaran.
+          Masukkan password bendahara untuk mengaktifkan mode edit (Ceklis Kas, Minggu, Pemasukan, Pengeluaran, & Data Siswa).
         </p>
         <div class="field">
           <label for="treasurerPasswordInput">Password Bendahara</label>
@@ -346,7 +370,7 @@
         </div>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="cancelTreasurerAuthBtn">Batal</button>
-          <button type="submit" class="btn-primary">Buka Pengeluaran</button>
+          <button type="submit" class="btn-primary">Buka Akses</button>
         </div>
       </form>
     </dialog>
