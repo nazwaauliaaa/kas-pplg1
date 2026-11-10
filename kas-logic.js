@@ -1,5 +1,48 @@
 export const DEFAULT_FEE = 2000;
-export const STORAGE_KEY = 'kas_kelas_data_v1';
+export const STORAGE_KEY = 'kas_kelas_data_v2';
+
+export const DEFAULT_STUDENTS = [
+  'Abdul Mughni',
+  'Adam Al Rizky',
+  'Ahmad Saiful',
+  'Alvin Rasya',
+  'Arka Hadi',
+  'Arya Zardan',
+  'Azman Nur',
+  'Dava Shalehillabi',
+  'Deriyana',
+  'Dzan Bagas',
+  'Ervan Fadilah',
+  'Fadilah Maulana',
+  'Galang Yusuf',
+  'Gina Febriani',
+  'Ikhsan Nurohman',
+  'Jhoni Yustiano',
+  'Leftyan Hamidi',
+  'Maulana Al Fandi',
+  'M. Farel Agna',
+  'M. Rasha Aldiansyah',
+  'M. Raffi Kustian',
+  'Mubarokah Denis',
+  'M. Iqbal Putra',
+  'M. Rizki',
+  'Nazwa Aulia',
+  'Novita Putri',
+  'Rafi Muhammad',
+  'Ramadhan Bangkit',
+  'Risky Nurofiq',
+  'Rommy Bima',
+  'Salsa Nuraeni',
+  'Siti Asti Nurjanah',
+  'Siti Nurfadila',
+  'Siti Rofiah',
+  'Sultan Surya',
+  'Triswal Wildan',
+  'Valdis Anhar',
+  'Wulan Nurhasanah',
+  'Zakiyy Adira',
+  'Zulfikar Ramdhani',
+];
 
 /**
  * Generates a compact unique ID with an optional prefix.
@@ -20,18 +63,10 @@ export function formatRupiah(amount) {
 }
 
 /**
- * Creates the initial state with sample students and Week 1 ready to test.
+ * Creates the initial state with the class student roster and Week 1 ready to use.
  */
 export function createInitialState() {
-  const sampleNames = [
-    'Ahmad Fauzi',
-    'Budi Santoso',
-    'Citra Lestari',
-    'Dewi Anggraini',
-    'Eko Prasetyo',
-  ];
-
-  const students = sampleNames.map((name, idx) => ({
+  const students = DEFAULT_STUDENTS.map((name, idx) => ({
     id: `stu_${idx + 1}`,
     number: idx + 1,
     name,
@@ -46,8 +81,8 @@ export function createInitialState() {
   };
 
   return {
-    version: 1,
-    className: 'Kas Kelas',
+    version: 2,
+    className: 'Kas PPLG 1',
     defaultFee: DEFAULT_FEE,
     students,
     weeks: [week1],

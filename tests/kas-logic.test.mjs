@@ -16,12 +16,15 @@ import {
   buildWhatsAppReport,
 } from '../kas-logic.js';
 
-test('createInitialState starts with 5 sample students and Rp0 balance', () => {
+test('createInitialState starts with 40 PPLG 1 students and Rp0 balance', () => {
   const state = createInitialState();
   const summary = calculateSummary(state);
 
   assert.equal(state.defaultFee, DEFAULT_FEE);
-  assert.equal(state.students.length, 5);
+  assert.equal(state.className, 'Kas PPLG 1');
+  assert.equal(state.students.length, 40);
+  assert.equal(state.students[0].name, 'Abdul Mughni');
+  assert.equal(state.students[39].name, 'Zulfikar Ramdhani');
   assert.equal(state.weeks.length, 1);
   assert.equal(summary.balance, 0);
   assert.equal(summary.activeWeekPaidCount, 0);
@@ -89,16 +92,17 @@ test('expenses subtract from total balance', () => {
 
 test('bulk student addition, deletion, and week deletion behave safely', () => {
   let state = createInitialState();
+  const initialCount = state.students.length;
   state = addStudentsBulk(state, 'Fajar\nGita\n\nHana');
-  assert.equal(state.students.length, 8);
-  assert.equal(state.students[7].number, 8);
+  assert.equal(state.students.length, initialCount + 3);
+  assert.equal(state.students[initialCount + 2].number, initialCount + 3);
 
-  const fajar = state.students[5];
+  const fajar = state.students[initialCount];
   state = togglePayment(state, state.activeWeekId, fajar.id);
   assert.equal(calculateSummary(state).balance, 2000);
 
   state = deleteStudent(state, fajar.id);
-  assert.equal(state.students.length, 7);
+  assert.equal(state.students.length, initialCount + 2);
   assert.equal(calculateSummary(state).balance, 0);
 
   // Cannot delete the last remaining week
