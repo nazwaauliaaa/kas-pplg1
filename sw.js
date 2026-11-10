@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kas-kelas-v4';
+const CACHE_NAME = 'kas-kelas-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -8,7 +8,7 @@ const ASSETS = [
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/icon.svg',
+  './icons/icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (event) => {
