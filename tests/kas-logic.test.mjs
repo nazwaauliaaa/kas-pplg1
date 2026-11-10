@@ -14,6 +14,7 @@ import {
   formatRupiah,
   normalizeState,
   buildWhatsAppReport,
+  verifyTreasurerPassword,
 } from '../kas-logic.js';
 
 test('createInitialState starts with 40 PPLG 1 students and Rp0 balance', () => {
@@ -122,5 +123,11 @@ test('formatRupiah, normalizeState, and WhatsApp report format properly', () => 
   const report = buildWhatsAppReport(normalized);
   assert.match(report, /XII IPA 1/);
   assert.match(report, /Rp2\.000/);
+});
+
+test('verifyTreasurerPassword accepts only bendahara123', () => {
+  assert.equal(verifyTreasurerPassword('bendahara123'), true);
+  assert.equal(verifyTreasurerPassword('salah'), false);
+  assert.equal(verifyTreasurerPassword(''), false);
 });
 

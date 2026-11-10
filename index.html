@@ -98,6 +98,12 @@
 
         <!-- TAB 2: PENGELUARAN -->
         <section id="tabExpenses" class="tab-panel">
+          <div class="treasurer-banner">
+            <span>Mode Bendahara Terbuka</span>
+            <button type="button" class="btn-mini" id="lockExpensesBtn">
+              &#128274; Kunci Kembali
+            </button>
+          </div>
           <div class="card">
             <h2>Catat Pengeluaran Kas</h2>
             <form id="expenseForm" class="stack-form">
@@ -214,8 +220,8 @@
           <span class="nav-icon">&#10003;</span>
           <span>Ceklis Kas</span>
         </button>
-        <button type="button" class="nav-btn" data-tab="tabExpenses">
-          <span class="nav-icon">&#8722;</span>
+        <button type="button" class="nav-btn" data-tab="tabExpenses" id="expensesNavBtn">
+          <span class="nav-icon" id="expensesNavIcon">&#128274;</span>
           <span>Pengeluaran</span>
         </button>
         <button type="button" class="nav-btn" data-tab="tabSettings">
@@ -240,6 +246,32 @@
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="cancelNewWeekBtn">Batal</button>
           <button type="submit" class="btn-primary">Buat Minggu</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- MODAL PASSWORD BENDAHARA -->
+    <dialog id="treasurerAuthModal" class="modal">
+      <form method="dialog" id="treasurerAuthForm" class="modal-card">
+        <h3>&#128274; Khusus Bendahara</h3>
+        <p class="modal-desc">
+          Masukkan password bendahara untuk membuka dan mengedit menu Pengeluaran.
+        </p>
+        <div class="field">
+          <label for="treasurerPasswordInput">Password Bendahara</label>
+          <input
+            type="password"
+            id="treasurerPasswordInput"
+            class="input"
+            placeholder="Masukkan password..."
+            autocomplete="current-password"
+            required
+          />
+          <span id="treasurerAuthError" class="form-error hidden"></span>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="cancelTreasurerAuthBtn">Batal</button>
+          <button type="submit" class="btn-primary">Buka Pengeluaran</button>
         </div>
       </form>
     </dialog>

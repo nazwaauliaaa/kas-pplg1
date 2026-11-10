@@ -1,5 +1,13 @@
 export const DEFAULT_FEE = 2000;
 export const STORAGE_KEY = 'kas_kelas_data_v2';
+export const TREASURER_PASSWORD = 'bendahara123';
+
+/**
+ * Checks whether the supplied password matches the treasurer password.
+ */
+export function verifyTreasurerPassword(password) {
+  return String(password || '') === TREASURER_PASSWORD;
+}
 
 export const DEFAULT_STUDENTS = [
   'Abdul Mughni',

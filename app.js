@@ -13,6 +13,7 @@ import {
   deleteExpense,
   formatRupiah,
   buildWhatsAppReport,
+  verifyTreasurerPassword,
 } from './kas-logic.js';
 
 let state = loadState();
@@ -20,6 +21,7 @@ let currentFilter = 'all';
 let searchQuery = '';
 let deferredInstallPrompt = null;
 let toastTimer = null;
+let isExpensesUnlocked = false;
 
 // Elements
 const classNameHeading = document.getElementById('classNameHeading');
@@ -69,6 +71,13 @@ const newWeekForm = document.getElementById('newWeekForm');
 const newWeekLabelInput = document.getElementById('newWeekLabel');
 const newWeekDateInput = document.getElementById('newWeekDate');
 const cancelNewWeekBtn = document.getElementById('cancelNewWeekBtn');
+const expensesNavIcon = document.getElementById('expensesNavIcon');
+const lockExpensesBtn = document.getElementById('lockExpensesBtn');
+const treasurerAuthModal = document.getElementById('treasurerAuthModal');
+const treasurerAuthForm = document.getElementById('treasurerAuthForm');
+const treasurerPasswordInput = document.getElementById('treasurerPasswordInput');
+const treasurerAuthError = document.getElementById('treasurerAuthError');
+const cancelTreasurerAuthBtn = document.getElementById('cancelTreasurerAuthBtn');
 const toastEl = document.getElementById('toast');
 
 function loadState() {
@@ -347,13 +356,55 @@ function renderStudentsManage() {
   }
 }
 
+function switchTab(target) {
+  navButtons.forEach((b) => b.classList.toggle('active', b.dataset.tab === target));
+  tabPanels.forEach((panel) => panel.classList.toggle('active', panel.id === target));
+}
+
+function updateExpensesLockUI() {
+  expensesNavIcon.innerHTML = isExpensesUnlocked ? '&#8722;' : '&#128274;';
+}
+
 // Navigation tabs
 navButtons.forEach((btn) => {
   btn.addEventListener('click', () => {
     const target = btn.dataset.tab;
-    navButtons.forEach((b) => b.classList.toggle('active', b === btn));
-    tabPanels.forEach((panel) => panel.classList.toggle('active', panel.id === target));
+    if (target === 'tabExpenses' && !isExpensesUnlocked) {
+      treasurerPasswordInput.value = '';
+      treasurerAuthError.textContent = '';
+      treasurerAuthError.classList.add('hidden');
+      treasurerAuthModal.showModal();
+      setTimeout(() => treasurerPasswordInput.focus(), 50);
+      return;
+    }
+    switchTab(target);
   });
+});
+
+treasurerAuthForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (verifyTreasurerPassword(treasurerPasswordInput.value)) {
+    isExpensesUnlocked = true;
+    updateExpensesLockUI();
+    treasurerAuthModal.close();
+    switchTab('tabExpenses');
+    showToast('Menu Pengeluaran dibuka');
+  } else {
+    treasurerAuthError.textContent = 'Password salah. Hanya bendahara yang bisa membuka menu ini.';
+    treasurerAuthError.classList.remove('hidden');
+    treasurerPasswordInput.select();
+  }
+});
+
+cancelTreasurerAuthBtn.addEventListener('click', () => {
+  treasurerAuthModal.close();
+});
+
+lockExpensesBtn.addEventListener('click', () => {
+  isExpensesUnlocked = false;
+  updateExpensesLockUI();
+  switchTab('tabChecklist');
+  showToast('Menu Pengeluaran dikunci');
 });
 
 // Week switching
