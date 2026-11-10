@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#059669" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Kas Kelas - Catatan Uang Kas Mingguan</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero-card">
+        <div class="hero-top">
+          <div>
+            <span class="badge-offline" id="storageBadge">Tersimpan di HP</span>
+            <h1 id="classNameHeading">Kas Kelas</h1>
+          </div>
+          <div class="hero-actions">
+            <button type="button" class="btn-icon hidden" id="installBtn" title="Install Aplikasi (PWA)">
+              Install
+            </button>
+            <button type="button" class="btn-icon" id="shareWaBtn" title="Salin Rekap WhatsApp">
+              Rekap WA
+            </button>
+          </div>
+        </div>
+
+        <div class="balance-block">
+          <span class="balance-label">Total Saldo Kas Saat Ini</span>
+          <div class="balance-amount" id="totalBalance">Rp0</div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-pill">
+            <span class="stat-label">Pemasukan</span>
+            <strong id="totalIncome">Rp0</strong>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-label">Pengeluaran</span>
+            <strong id="totalExpense">Rp0</strong>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <!-- TAB 1: CEKLIS KAS MINGGUAN -->
+        <section id="tabChecklist" class="tab-panel active">
+          <div class="card week-card">
+            <div class="week-controls">
+              <button type="button" class="btn-circle" id="prevWeekBtn" aria-label="Minggu Sebelumnya">
+                &#8249;
+              </button>
+              <div class="week-select-wrap">
+                <select id="weekSelect" aria-label="Pilih Minggu"></select>
+                <span class="week-date" id="activeWeekMeta">Rp2.000 / siswa</span>
+              </div>
+              <button type="button" class="btn-circle" id="nextWeekBtn" aria-label="Minggu Berikutnya">
+                &#8250;
+              </button>
+              <button type="button" class="btn-primary btn-sm" id="openNewWeekBtn">
+                + Minggu
+              </button>
+            </div>
+
+            <div class="progress-wrap">
+              <div class="progress-header">
+                <span id="weekProgressText">0 / 0 siswa lunas</span>
+                <strong id="weekIncomeText">Rp0</strong>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" id="weekProgressBar" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <input
+              type="search"
+              id="searchStudentInput"
+              class="input"
+              placeholder="Cari nama siswa..."
+              autocomplete="off"
+            />
+            <div class="filter-pills" role="tablist" aria-label="Filter status bayar">
+              <button type="button" class="pill active" data-filter="all">Semua</button>
+              <button type="button" class="pill" data-filter="unpaid">Belum</button>
+              <button type="button" class="pill" data-filter="paid">Lunas</button>
+            </div>
+          </div>
+
+          <div id="checklistContainer" class="checklist-list"></div>
+        </section>
+
+        <!-- TAB 2: PENGELUARAN -->
+        <section id="tabExpenses" class="tab-panel">
+          <div class="card">
+            <h2>Catat Pengeluaran Kas</h2>
+            <form id="expenseForm" class="stack-form">
+              <div class="field">
+                <label for="expenseTitle">Keperluan</label>
+                <input
+                  type="text"
+                  id="expenseTitle"
+                  class="input"
+                  placeholder="Contoh: Beli spidol & penghapus"
+                  required
+                />
+              </div>
+              <div class="grid-2">
+                <div class="field">
+                  <label for="expenseAmount">Nominal (Rp)</label>
+                  <input
+                    type="number"
+                    id="expenseAmount"
+                    class="input"
+                    min="100"
+                    step="100"
+                    placeholder="10000"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="expenseDate">Tanggal</label>
+                  <input type="date" id="expenseDate" class="input" required />
+                </div>
+              </div>
+              <button type="submit" class="btn-primary">Simpan Pengeluaran</button>
+            </form>
+          </div>
+
+          <div class="section-header">
+            <h3>Riwayat Pengeluaran</h3>
+          </div>
+          <div id="expensesList" class="stack-list"></div>
+        </section>
+
+        <!-- TAB 3: SISWA & PENGATURAN -->
+        <section id="tabSettings" class="tab-panel">
+          <div class="card">
+            <h2>Tambah Siswa</h2>
+            <form id="addStudentsForm" class="stack-form">
+              <div class="field">
+                <label for="bulkStudentsInput">Nama Siswa (1 nama per baris)</label>
+                <textarea
+                  id="bulkStudentsInput"
+                  class="input textarea"
+                  rows="3"
+                  placeholder="Contoh:&#10;Raka Pratama&#10;Siti Aminah"
+                  required
+                ></textarea>
+              </div>
+              <button type="submit" class="btn-primary">+ Tambah ke Daftar</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="section-header-inline">
+              <h2>Daftar Siswa (<span id="studentCountLabel">0</span>)</h2>
+            </div>
+            <div id="studentsManageList" class="stack-list"></div>
+          </div>
+
+          <div class="card">
+            <h2>Pengaturan Kas & Periode</h2>
+            <form id="settingsForm" class="stack-form">
+              <div class="grid-2">
+                <div class="field">
+                  <label for="classNameInput">Nama Kelas</label>
+                  <input type="text" id="classNameInput" class="input" required />
+                </div>
+                <div class="field">
+                  <label for="defaultFeeInput">Iuran / Minggu (Rp)</label>
+                  <input
+                    type="number"
+                    id="defaultFeeInput"
+                    class="input"
+                    min="500"
+                    step="500"
+                    required
+                  />
+                </div>
+              </div>
+              <button type="submit" class="btn-secondary">Simpan Pengaturan</button>
+            </form>
+
+            <div class="divider"></div>
+
+            <div class="stack-actions">
+              <button type="button" class="btn-secondary" id="deleteActiveWeekBtn">
+                Hapus Minggu Aktif
+              </button>
+              <button type="button" class="btn-secondary" id="exportJsonBtn">
+                Backup Data (JSON)
+              </button>
+              <label class="btn-secondary file-btn">
+                Restore Data (JSON)
+                <input type="file" id="importJsonInput" accept="application/json,.json" hidden />
+              </label>
+              <button type="button" class="btn-danger-outline" id="resetDataBtn">
+                Reset Semua Data
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="Menu Utama">
+        <button type="button" class="nav-btn active" data-tab="tabChecklist">
+          <span class="nav-icon">&#10003;</span>
+          <span>Ceklis Kas</span>
+        </button>
+        <button type="button" class="nav-btn" data-tab="tabExpenses">
+          <span class="nav-icon">&#8722;</span>
+          <span>Pengeluaran</span>
+        </button>
+        <button type="button" class="nav-btn" data-tab="tabSettings">
+          <span class="nav-icon">&#9881;</span>
+          <span>Siswa & Data</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- MODAL MINGGU BARU -->
+    <dialog id="newWeekModal" class="modal">
+      <form method="dialog" id="newWeekForm" class="modal-card">
+        <h3>Buat Periode Minggu Baru</h3>
+        <div class="field">
+          <label for="newWeekLabel">Nama Periode</label>
+          <input type="text" id="newWeekLabel" class="input" placeholder="Minggu 2" required />
+        </div>
+        <div class="field">
+          <label for="newWeekDate">Tanggal</label>
+          <input type="date" id="newWeekDate" class="input" required />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="cancelNewWeekBtn">Batal</button>
+          <button type="submit" class="btn-primary">Buat Minggu</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
+
