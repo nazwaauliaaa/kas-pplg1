@@ -1,17 +1,19 @@
 :root {
-  --bg: #f1f5f9;
+  --bg: #eef7fb;
   --surface: #ffffff;
-  --surface-muted: #f8fafc;
-  --text: #0f172a;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
-  --primary: #059669;
-  --primary-dark: #047857;
-  --primary-soft: #d1fae5;
+  --surface-muted: #f4fafd;
+  --text: #1B365D;
+  --text-muted: #527193;
+  --border: #cfe7f3;
+  --primary: #005A9C;
+  --primary-dark: #1B365D;
+  --primary-soft: #d9f2fa;
+  --accent: #60C1E5;
+  --accent-soft: #A0E0EF;
   --danger: #dc2626;
   --danger-soft: #fee2e2;
   --radius: 16px;
-  --shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  --shadow: 0 4px 16px rgba(27, 54, 93, 0.08);
 }
 
 * {
@@ -40,11 +42,11 @@ body {
 
 /* HERO CARD */
 .hero-card {
-  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  background: linear-gradient(135deg, #005A9C 0%, #1B365D 100%);
   color: #ffffff;
   border-radius: 20px;
   padding: 18px;
-  box-shadow: 0 10px 24px rgba(5, 150, 105, 0.25);
+  box-shadow: 0 10px 24px rgba(0, 90, 156, 0.28);
   margin-bottom: 14px;
 }
 
@@ -227,7 +229,7 @@ body {
 
 .progress-fill {
   height: 100%;
-  background: var(--primary);
+  background: linear-gradient(90deg, #60C1E5 0%, #005A9C 100%);
   border-radius: 999px;
   transition: width 0.25s ease;
 }
@@ -289,8 +291,8 @@ body {
 }
 
 .student-row.paid {
-  border-color: #6ee7b7;
-  background: #ecfdf5;
+  border-color: #60C1E5;
+  background: #edf9fd;
 }
 
 .student-info {
@@ -316,7 +318,7 @@ body {
 
 .student-row.paid .student-num {
   background: var(--primary-soft);
-  border-color: #a7f3d0;
+  border-color: #A0E0EF;
   color: var(--primary-dark);
 }
 
@@ -619,7 +621,7 @@ body {
   gap: 10px;
   background: var(--primary-soft);
   color: var(--primary-dark);
-  border: 1px solid #a7f3d0;
+  border: 1px solid #A0E0EF;
   border-radius: 12px;
   padding: 10px 14px;
   font-size: 13px;
@@ -640,7 +642,7 @@ body {
   left: 50%;
   bottom: calc(76px + env(safe-area-inset-bottom));
   transform: translate(-50%, 16px);
-  background: #0f172a;
+  background: #1B365D;
   color: #ffffff;
   font-size: 13px;
   font-weight: 500;
