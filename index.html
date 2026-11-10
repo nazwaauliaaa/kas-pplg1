@@ -85,11 +85,64 @@
           <div id="checklistContainer" class="checklist-list"></div>
         </section>
 
-        <!-- TAB 2: PENGELUARAN -->
+        <!-- TAB 2: PEMASUKAN LAINNYA -->
+        <section id="tabIncomes" class="tab-panel">
+          <div class="treasurer-banner">
+            <span>Mode Bendahara Terbuka</span>
+            <button type="button" class="btn-mini lock-treasurer-btn">
+              <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="4" y="11" width="16" height="10" rx="2.5"></rect>
+                <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+              </svg>
+              Kunci Kembali
+            </button>
+          </div>
+          <div class="card">
+            <h2>Catat Pemasukan Lainnya</h2>
+            <form id="incomeForm" class="stack-form">
+              <div class="field">
+                <label for="incomeTitle">Sumber / Keterangan</label>
+                <input
+                  type="text"
+                  id="incomeTitle"
+                  class="input"
+                  placeholder="Contoh: Sisa kas tahun lalu / donasi"
+                  required
+                />
+              </div>
+              <div class="grid-2">
+                <div class="field">
+                  <label for="incomeAmount">Nominal (Rp)</label>
+                  <input
+                    type="number"
+                    id="incomeAmount"
+                    class="input"
+                    min="100"
+                    step="100"
+                    placeholder="50000"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="incomeDate">Tanggal</label>
+                  <input type="date" id="incomeDate" class="input" required />
+                </div>
+              </div>
+              <button type="submit" class="btn-primary">Simpan Pemasukan</button>
+            </form>
+          </div>
+
+          <div class="section-header">
+            <h3>Riwayat Pemasukan Lainnya</h3>
+          </div>
+          <div id="incomesList" class="stack-list"></div>
+        </section>
+
+        <!-- TAB 3: PENGELUARAN -->
         <section id="tabExpenses" class="tab-panel">
           <div class="treasurer-banner">
             <span>Mode Bendahara Terbuka</span>
-            <button type="button" class="btn-mini" id="lockExpensesBtn">
+            <button type="button" class="btn-mini lock-treasurer-btn">
               <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="4" y="11" width="16" height="10" rx="2.5"></rect>
                 <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
@@ -217,8 +270,17 @@
           </span>
           <span>Ceklis Kas</span>
         </button>
+        <button type="button" class="nav-btn" data-tab="tabIncomes" id="incomesNavBtn">
+          <span class="nav-icon treasurer-lock-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="11" width="16" height="10" rx="2.5"></rect>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+            </svg>
+          </span>
+          <span>Pemasukan</span>
+        </button>
         <button type="button" class="nav-btn" data-tab="tabExpenses" id="expensesNavBtn">
-          <span class="nav-icon" id="expensesNavIcon" aria-hidden="true">
+          <span class="nav-icon treasurer-lock-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="4" y="11" width="16" height="10" rx="2.5"></rect>
               <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
@@ -268,7 +330,7 @@
           Khusus Bendahara
         </h3>
         <p class="modal-desc">
-          Masukkan password bendahara untuk membuka dan mengedit menu Pengeluaran.
+          Masukkan password bendahara untuk membuka dan mengedit menu Pemasukan & Pengeluaran.
         </p>
         <div class="field">
           <label for="treasurerPasswordInput">Password Bendahara</label>

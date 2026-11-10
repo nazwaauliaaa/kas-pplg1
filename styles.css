@@ -546,8 +546,8 @@ body {
   background: var(--surface);
   border-top: 1px solid var(--border);
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  grid-template-columns: repeat(4, 1fr);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
   z-index: 20;
 }
 
@@ -559,11 +559,12 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 6px 4px;
+  padding: 6px 2px;
   font-size: 11px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .nav-btn.active {

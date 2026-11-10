@@ -1,4 +1,5 @@
 export const DEFAULT_FEE = 2000;
+export const DEFAULT_CARRYOVER_AMOUNT = 600000;
 export const STORAGE_KEY = 'kas_kelas_data_v2';
 export const TREASURER_PASSWORD = 'bendahara123';
 
@@ -70,6 +71,52 @@ export function formatRupiah(amount) {
   return `${sign}Rp${absFormatted}`;
 }
 
+function createInitialCarryoverIncome() {
+  return {
+    id: 'inc_initial_carryover',
+    title: 'Sisa uang kas tahun kemarin',
+    amount: DEFAULT_CARRYOVER_AMOUNT,
+    date: new Date().toISOString().slice(0, 10),
+  };
+}
+
+function normalizeLedgerEntries(rawList) {
+  if (!Array.isArray(rawList)) return [];
+  return rawList
+    .filter(
+      (item) =>
+        item &&
+        typeof item.id === 'string' &&
+        typeof item.title === 'string' &&
+        Number.isFinite(Number(item.amount)) &&
+        Number(item.amount) > 0
+    )
+    .map((item) => ({
+      id: item.id,
+      title: item.title.trim(),
+      amount: Math.round(Number(item.amount)),
+      date: typeof item.date === 'string' ? item.date : new Date().toISOString().slice(0, 10),
+    }));
+}
+
+function appendLedgerEntry(list, prefix, { title, amount, date }) {
+  const cleanTitle = String(title || '').trim();
+  const cleanAmount = Math.round(Number(amount));
+  if (!cleanTitle || !Number.isFinite(cleanAmount) || cleanAmount <= 0) {
+    return null;
+  }
+
+  return [
+    {
+      id: createId(prefix),
+      title: cleanTitle,
+      amount: cleanAmount,
+      date: String(date || '').trim() || new Date().toISOString().slice(0, 10),
+    },
+    ...list,
+  ];
+}
+
 /**
  * Creates the initial state with the class student roster and Week 1 ready to use.
  */
@@ -89,12 +136,13 @@ export function createInitialState() {
   };
 
   return {
-    version: 2,
+    version: 3,
     className: 'Kas PPLG 1',
     defaultFee: DEFAULT_FEE,
     students,
     weeks: [week1],
     activeWeekId: week1.id,
+    extraIncomes: [createInitialCarryoverIncome()],
     expenses: [],
   };
 }
@@ -152,26 +200,14 @@ export function normalizeState(raw) {
   const activeWeekExists = weeks.some((w) => w.id === raw.activeWeekId);
   const activeWeekId = activeWeekExists ? raw.activeWeekId : weeks[weeks.length - 1].id;
 
-  const expenses = Array.isArray(raw.expenses)
-    ? raw.expenses
-        .filter(
-          (e) =>
-            e &&
-            typeof e.id === 'string' &&
-            typeof e.title === 'string' &&
-            Number.isFinite(Number(e.amount)) &&
-            Number(e.amount) > 0
-        )
-        .map((e) => ({
-          id: e.id,
-          title: e.title.trim(),
-          amount: Math.round(Number(e.amount)),
-          date: typeof e.date === 'string' ? e.date : new Date().toISOString().slice(0, 10),
-        }))
-    : [];
+  const expenses = normalizeLedgerEntries(raw.expenses);
+  // Seed last year's carryover once when migrating older stored states that lack extraIncomes.
+  const extraIncomes = Array.isArray(raw.extraIncomes)
+    ? normalizeLedgerEntries(raw.extraIncomes)
+    : [createInitialCarryoverIncome()];
 
   return {
-    version: 1,
+    version: 3,
     className:
       typeof raw.className === 'string' && raw.className.trim()
         ? raw.className.trim()
@@ -180,28 +216,31 @@ export function normalizeState(raw) {
     students,
     weeks,
     activeWeekId,
+    extraIncomes,
     expenses,
   };
 }
 
 /**
- * Computes total income across all weeks, total expenses, net balance,
+ * Computes weekly income, extra income, total income, total expenses, net balance,
  * and active week summary.
  */
 export function calculateSummary(state) {
   const studentIds = new Set(state.students.map((s) => s.id));
-  let totalIncome = 0;
+  let weeklyIncome = 0;
 
   for (const week of state.weeks) {
     const weekFee = week.fee || state.defaultFee || DEFAULT_FEE;
     const payments = week.payments || {};
     for (const studentId of Object.keys(payments)) {
       if (studentIds.has(studentId) && payments[studentId]?.paid) {
-        totalIncome += weekFee;
+        weeklyIncome += weekFee;
       }
     }
   }
 
+  const extraIncome = (state.extraIncomes || []).reduce((sum, inc) => sum + (inc.amount || 0), 0);
+  const totalIncome = weeklyIncome + extraIncome;
   const totalExpense = state.expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
   const balance = totalIncome - totalExpense;
 
@@ -221,6 +260,8 @@ export function calculateSummary(state) {
   const activeWeekTarget = totalStudents * activeWeekFee;
 
   return {
+    weeklyIncome,
+    extraIncome,
     totalIncome,
     totalExpense,
     balance,
@@ -375,26 +416,29 @@ export function deleteWeek(state, weekId) {
 }
 
 /**
- * Adds an expense item.
+ * Adds an extra income item (e.g. carryover balance or donations).
  */
-export function addExpense(state, { title, amount, date }) {
-  const cleanTitle = String(title || '').trim();
-  const cleanAmount = Math.round(Number(amount));
-  if (!cleanTitle || !Number.isFinite(cleanAmount) || cleanAmount <= 0) {
-    return state;
-  }
+export function addExtraIncome(state, entry) {
+  const next = appendLedgerEntry(state.extraIncomes || [], 'inc', entry);
+  return next ? { ...state, extraIncomes: next } : state;
+}
 
-  const expense = {
-    id: createId('exp'),
-    title: cleanTitle,
-    amount: cleanAmount,
-    date: String(date || '').trim() || new Date().toISOString().slice(0, 10),
-  };
-
+/**
+ * Deletes an extra income item.
+ */
+export function deleteExtraIncome(state, incomeId) {
   return {
     ...state,
-    expenses: [expense, ...state.expenses],
+    extraIncomes: (state.extraIncomes || []).filter((i) => i.id !== incomeId),
   };
+}
+
+/**
+ * Adds an expense item.
+ */
+export function addExpense(state, entry) {
+  const next = appendLedgerEntry(state.expenses, 'exp', entry);
+  return next ? { ...state, expenses: next } : state;
 }
 
 /**

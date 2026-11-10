@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   DEFAULT_FEE,
+  DEFAULT_CARRYOVER_AMOUNT,
   createInitialState,
   calculateSummary,
   togglePayment,
@@ -9,6 +10,8 @@ import {
   deleteStudent,
   addWeek,
   deleteWeek,
+  addExtraIncome,
+  deleteExtraIncome,
   addExpense,
   deleteExpense,
   formatRupiah,
@@ -17,7 +20,7 @@ import {
   verifyTreasurerPassword,
 } from '../kas-logic.js';
 
-test('createInitialState starts with 40 PPLG 1 students and Rp0 balance', () => {
+test('createInitialState starts with 40 PPLG 1 students and Rp600.000 carryover balance', () => {
   const state = createInitialState();
   const summary = calculateSummary(state);
 
@@ -27,7 +30,10 @@ test('createInitialState starts with 40 PPLG 1 students and Rp0 balance', () => 
   assert.equal(state.students[0].name, 'Abdul Mughni');
   assert.equal(state.students[39].name, 'Zulfikar Ramdhani');
   assert.equal(state.weeks.length, 1);
-  assert.equal(summary.balance, 0);
+  assert.equal(state.extraIncomes.length, 1);
+  assert.equal(summary.extraIncome, DEFAULT_CARRYOVER_AMOUNT);
+  assert.equal(summary.weeklyIncome, 0);
+  assert.equal(summary.balance, 600000);
   assert.equal(summary.activeWeekPaidCount, 0);
 });
 
@@ -38,15 +44,15 @@ test('toggling student payment increases and decreases balance by Rp2.000', () =
   const student2 = state.students[1].id;
 
   state = togglePayment(state, weekId, student1);
-  assert.equal(calculateSummary(state).balance, 2000);
+  assert.equal(calculateSummary(state).balance, 602000);
   assert.equal(calculateSummary(state).activeWeekPaidCount, 1);
 
   state = togglePayment(state, weekId, student2);
-  assert.equal(calculateSummary(state).balance, 4000);
+  assert.equal(calculateSummary(state).balance, 604000);
   assert.equal(calculateSummary(state).activeWeekPaidCount, 2);
 
   state = togglePayment(state, weekId, student1);
-  assert.equal(calculateSummary(state).balance, 2000);
+  assert.equal(calculateSummary(state).balance, 602000);
   assert.equal(calculateSummary(state).activeWeekPaidCount, 1);
 });
 
@@ -56,21 +62,34 @@ test('weekly periods preserve previous week balance when adding a new week', () 
 
   state = togglePayment(state, week1Id, state.students[0].id);
   state = togglePayment(state, week1Id, state.students[1].id);
-  assert.equal(calculateSummary(state).balance, 4000);
+  assert.equal(calculateSummary(state).balance, 604000);
 
   state = addWeek(state, 'Minggu 2', '2026-11-17');
   assert.equal(state.weeks.length, 2);
   assert.notEqual(state.activeWeekId, week1Id);
 
   let summary = calculateSummary(state);
-  assert.equal(summary.balance, 4000);
+  assert.equal(summary.balance, 604000);
   assert.equal(summary.activeWeekPaidCount, 0);
 
   state = togglePayment(state, state.activeWeekId, state.students[0].id);
   summary = calculateSummary(state);
-  assert.equal(summary.balance, 6000);
+  assert.equal(summary.balance, 606000);
   assert.equal(summary.activeWeekPaidCount, 1);
   assert.equal(summary.activeWeekIncome, 2000);
+});
+
+test('extra incomes add to total income and balance, and can be deleted', () => {
+  let state = createInitialState();
+  state = addExtraIncome(state, { title: 'Sisa dana pensi', amount: 50000, date: '2026-11-10' });
+  let summary = calculateSummary(state);
+  assert.equal(summary.extraIncome, 650000);
+  assert.equal(summary.totalIncome, 650000);
+  assert.equal(summary.balance, 650000);
+
+  state = deleteExtraIncome(state, state.extraIncomes[0].id);
+  summary = calculateSummary(state);
+  assert.equal(summary.balance, 600000);
 });
 
 test('expenses subtract from total balance', () => {
@@ -82,13 +101,13 @@ test('expenses subtract from total balance', () => {
 
   state = addExpense(state, { title: 'Beli spidol', amount: 3500, date: '2026-11-10' });
   let summary = calculateSummary(state);
-  assert.equal(summary.totalIncome, 6000);
+  assert.equal(summary.totalIncome, 606000);
   assert.equal(summary.totalExpense, 3500);
-  assert.equal(summary.balance, 2500);
+  assert.equal(summary.balance, 602500);
 
   state = deleteExpense(state, state.expenses[0].id);
   summary = calculateSummary(state);
-  assert.equal(summary.balance, 6000);
+  assert.equal(summary.balance, 606000);
 });
 
 test('bulk student addition, deletion, and week deletion behave safely', () => {
@@ -100,11 +119,11 @@ test('bulk student addition, deletion, and week deletion behave safely', () => {
 
   const fajar = state.students[initialCount];
   state = togglePayment(state, state.activeWeekId, fajar.id);
-  assert.equal(calculateSummary(state).balance, 2000);
+  assert.equal(calculateSummary(state).balance, 602000);
 
   state = deleteStudent(state, fajar.id);
   assert.equal(state.students.length, initialCount + 2);
-  assert.equal(calculateSummary(state).balance, 0);
+  assert.equal(calculateSummary(state).balance, 600000);
 
   // Cannot delete the last remaining week
   const onlyWeekId = state.weeks[0].id;
@@ -112,17 +131,24 @@ test('bulk student addition, deletion, and week deletion behave safely', () => {
   assert.equal(state.weeks.length, 1);
 });
 
-test('formatRupiah, normalizeState, and WhatsApp report format properly', () => {
+test('formatRupiah, normalizeState migration, and WhatsApp report work properly', () => {
   assert.equal(formatRupiah(2000), 'Rp2.000');
   assert.equal(formatRupiah(-5000), '-Rp5.000');
 
-  const normalized = normalizeState({ className: 'XII IPA 1', defaultFee: 2000 });
-  assert.equal(normalized.className, 'XII IPA 1');
-  assert.equal(normalized.weeks.length, 1);
+  // Legacy state without extraIncomes gets seeded with Rp600.000
+  const migrated = normalizeState({ className: 'XII IPA 1', defaultFee: 2000 });
+  assert.equal(migrated.className, 'XII IPA 1');
+  assert.equal(migrated.weeks.length, 1);
+  assert.equal(migrated.extraIncomes.length, 1);
+  assert.equal(migrated.extraIncomes[0].amount, 600000);
 
-  const report = buildWhatsAppReport(normalized);
+  // Explicit empty extraIncomes stays empty
+  const cleared = normalizeState({ className: 'XII IPA 1', defaultFee: 2000, extraIncomes: [] });
+  assert.equal(cleared.extraIncomes.length, 0);
+
+  const report = buildWhatsAppReport(migrated);
   assert.match(report, /XII IPA 1/);
-  assert.match(report, /Rp2\.000/);
+  assert.match(report, /Rp600\.000/);
 });
 
 test('verifyTreasurerPassword accepts only bendahara123', () => {
@@ -130,4 +156,3 @@ test('verifyTreasurerPassword accepts only bendahara123', () => {
   assert.equal(verifyTreasurerPassword('salah'), false);
   assert.equal(verifyTreasurerPassword(''), false);
 });
-

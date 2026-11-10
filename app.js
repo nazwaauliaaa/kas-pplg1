@@ -9,6 +9,8 @@ import {
   deleteStudent,
   addWeek,
   deleteWeek,
+  addExtraIncome,
+  deleteExtraIncome,
   addExpense,
   deleteExpense,
   formatRupiah,
@@ -19,7 +21,8 @@ let state = loadState();
 let currentFilter = 'all';
 let searchQuery = '';
 let toastTimer = null;
-let isExpensesUnlocked = false;
+let isTreasurerUnlocked = false;
+let pendingProtectedTab = null;
 
 // Elements
 const classNameHeading = document.getElementById('classNameHeading');
@@ -39,6 +42,12 @@ const weekProgressBarEl = document.getElementById('weekProgressBar');
 const searchStudentInput = document.getElementById('searchStudentInput');
 const filterButtons = document.querySelectorAll('.filter-pills .pill');
 const checklistContainer = document.getElementById('checklistContainer');
+
+const incomeForm = document.getElementById('incomeForm');
+const incomeTitleInput = document.getElementById('incomeTitle');
+const incomeAmountInput = document.getElementById('incomeAmount');
+const incomeDateInput = document.getElementById('incomeDate');
+const incomesList = document.getElementById('incomesList');
 
 const expenseForm = document.getElementById('expenseForm');
 const expenseTitleInput = document.getElementById('expenseTitle');
@@ -67,8 +76,8 @@ const newWeekForm = document.getElementById('newWeekForm');
 const newWeekLabelInput = document.getElementById('newWeekLabel');
 const newWeekDateInput = document.getElementById('newWeekDate');
 const cancelNewWeekBtn = document.getElementById('cancelNewWeekBtn');
-const expensesNavIcon = document.getElementById('expensesNavIcon');
-const lockExpensesBtn = document.getElementById('lockExpensesBtn');
+const treasurerLockIcons = document.querySelectorAll('.treasurer-lock-icon');
+const lockTreasurerButtons = document.querySelectorAll('.lock-treasurer-btn');
 const treasurerAuthModal = document.getElementById('treasurerAuthModal');
 const treasurerAuthForm = document.getElementById('treasurerAuthForm');
 const treasurerPasswordInput = document.getElementById('treasurerPasswordInput');
@@ -84,7 +93,12 @@ function loadState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
       return initial;
     }
-    return normalizeState(JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    const normalized = normalizeState(parsed);
+    if (!Array.isArray(parsed?.extraIncomes)) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+    }
+    return normalized;
   } catch {
     return createInitialState();
   }
@@ -143,6 +157,7 @@ function render() {
   weekProgressBarEl.style.width = `${pct}%`;
 
   renderChecklist(activeWeek, summary.activeWeekFee);
+  renderIncomes();
   renderExpenses();
   renderStudentsManage();
 
@@ -243,18 +258,18 @@ function renderChecklist(activeWeek, weekFee) {
   }
 }
 
-function renderExpenses() {
-  expensesList.innerHTML = '';
+function renderLedgerList(container, items, { emptyText, amountSign, confirmPrefix, onDelete }) {
+  container.innerHTML = '';
 
-  if (state.expenses.length === 0) {
+  if (items.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = 'Belum ada pengeluaran kas yang dicatat.';
-    expensesList.appendChild(empty);
+    empty.textContent = emptyText;
+    container.appendChild(empty);
     return;
   }
 
-  for (const exp of state.expenses) {
+  for (const entry of items) {
     const item = document.createElement('div');
     item.className = 'list-item';
 
@@ -263,11 +278,11 @@ function renderExpenses() {
 
     const title = document.createElement('div');
     title.className = 'list-item-title';
-    title.textContent = exp.title;
+    title.textContent = entry.title;
 
     const sub = document.createElement('div');
     sub.className = 'list-item-sub';
-    sub.textContent = `${exp.date} • -${formatRupiah(exp.amount)}`;
+    sub.textContent = `${entry.date} • ${amountSign}${formatRupiah(entry.amount)}`;
 
     main.appendChild(title);
     main.appendChild(sub);
@@ -280,17 +295,40 @@ function renderExpenses() {
     delBtn.className = 'btn-mini danger';
     delBtn.textContent = 'Hapus';
     delBtn.addEventListener('click', () => {
-      if (confirm(`Hapus pengeluaran "${exp.title}"?`)) {
-        saveAndRender(deleteExpense(state, exp.id));
-        showToast('Pengeluaran dihapus');
+      if (confirm(`Hapus ${confirmPrefix} "${entry.title}"?`)) {
+        onDelete(entry.id);
       }
     });
 
     actions.appendChild(delBtn);
     item.appendChild(main);
     item.appendChild(actions);
-    expensesList.appendChild(item);
+    container.appendChild(item);
   }
+}
+
+function renderIncomes() {
+  renderLedgerList(incomesList, state.extraIncomes || [], {
+    emptyText: 'Belum ada pemasukan lainnya yang dicatat.',
+    amountSign: '+',
+    confirmPrefix: 'pemasukan',
+    onDelete: (id) => {
+      saveAndRender(deleteExtraIncome(state, id));
+      showToast('Pemasukan dihapus');
+    },
+  });
+}
+
+function renderExpenses() {
+  renderLedgerList(expensesList, state.expenses, {
+    emptyText: 'Belum ada pengeluaran kas yang dicatat.',
+    amountSign: '-',
+    confirmPrefix: 'pengeluaran',
+    onDelete: (id) => {
+      saveAndRender(deleteExpense(state, id));
+      showToast('Pengeluaran dihapus');
+    },
+  });
 }
 
 function renderStudentsManage() {
@@ -360,15 +398,21 @@ function switchTab(target) {
 const LOCKED_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2.5"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>`;
 const UNLOCKED_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2.5"></rect><path d="M8 11V7a4 4 0 0 1 7.6-1.7"></path></svg>`;
 
-function updateExpensesLockUI() {
-  expensesNavIcon.innerHTML = isExpensesUnlocked ? UNLOCKED_ICON_SVG : LOCKED_ICON_SVG;
+function updateTreasurerLockUI() {
+  const iconSvg = isTreasurerUnlocked ? UNLOCKED_ICON_SVG : LOCKED_ICON_SVG;
+  treasurerLockIcons.forEach((iconEl) => {
+    iconEl.innerHTML = iconSvg;
+  });
 }
 
 // Navigation tabs
+const PROTECTED_TABS = new Set(['tabIncomes', 'tabExpenses']);
+
 navButtons.forEach((btn) => {
   btn.addEventListener('click', () => {
     const target = btn.dataset.tab;
-    if (target === 'tabExpenses' && !isExpensesUnlocked) {
+    if (PROTECTED_TABS.has(target) && !isTreasurerUnlocked) {
+      pendingProtectedTab = target;
       treasurerPasswordInput.value = '';
       treasurerAuthError.textContent = '';
       treasurerAuthError.classList.add('hidden');
@@ -383,11 +427,13 @@ navButtons.forEach((btn) => {
 treasurerAuthForm.addEventListener('submit', (e) => {
   e.preventDefault();
   if (verifyTreasurerPassword(treasurerPasswordInput.value)) {
-    isExpensesUnlocked = true;
-    updateExpensesLockUI();
+    isTreasurerUnlocked = true;
+    updateTreasurerLockUI();
     treasurerAuthModal.close();
-    switchTab('tabExpenses');
-    showToast('Menu Pengeluaran dibuka');
+    const targetTab = pendingProtectedTab || 'tabExpenses';
+    pendingProtectedTab = null;
+    switchTab(targetTab);
+    showToast('Akses bendahara dibuka');
   } else {
     treasurerAuthError.textContent = 'Password salah. Hanya bendahara yang bisa membuka menu ini.';
     treasurerAuthError.classList.remove('hidden');
@@ -396,14 +442,17 @@ treasurerAuthForm.addEventListener('submit', (e) => {
 });
 
 cancelTreasurerAuthBtn.addEventListener('click', () => {
+  pendingProtectedTab = null;
   treasurerAuthModal.close();
 });
 
-lockExpensesBtn.addEventListener('click', () => {
-  isExpensesUnlocked = false;
-  updateExpensesLockUI();
-  switchTab('tabChecklist');
-  showToast('Menu Pengeluaran dikunci');
+lockTreasurerButtons.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    isTreasurerUnlocked = false;
+    updateTreasurerLockUI();
+    switchTab('tabChecklist');
+    showToast('Menu bendahara dikunci');
+  });
 });
 
 // Week switching
@@ -458,20 +507,39 @@ filterButtons.forEach((btn) => {
   });
 });
 
-// Expenses
-expenseDateInput.value = new Date().toISOString().slice(0, 10);
-expenseForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const next = addExpense(state, {
-    title: expenseTitleInput.value,
-    amount: expenseAmountInput.value,
-    date: expenseDateInput.value,
+function bindLedgerForm(form, titleInput, amountInput, dateInput, addFn, toastMessage) {
+  dateInput.value = new Date().toISOString().slice(0, 10);
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const next = addFn(state, {
+      title: titleInput.value,
+      amount: amountInput.value,
+      date: dateInput.value,
+    });
+    form.reset();
+    dateInput.value = new Date().toISOString().slice(0, 10);
+    saveAndRender(next);
+    showToast(toastMessage);
   });
-  expenseForm.reset();
-  expenseDateInput.value = new Date().toISOString().slice(0, 10);
-  saveAndRender(next);
-  showToast('Pengeluaran disimpan');
-});
+}
+
+// Extra Incomes & Expenses
+bindLedgerForm(
+  incomeForm,
+  incomeTitleInput,
+  incomeAmountInput,
+  incomeDateInput,
+  addExtraIncome,
+  'Pemasukan disimpan'
+);
+bindLedgerForm(
+  expenseForm,
+  expenseTitleInput,
+  expenseAmountInput,
+  expenseDateInput,
+  addExpense,
+  'Pengeluaran disimpan'
+);
 
 // Students bulk add
 addStudentsForm.addEventListener('submit', (e) => {
