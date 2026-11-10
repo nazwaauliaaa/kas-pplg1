@@ -12,14 +12,12 @@ import {
   addExpense,
   deleteExpense,
   formatRupiah,
-  buildWhatsAppReport,
   verifyTreasurerPassword,
 } from './kas-logic.js';
 
 let state = loadState();
 let currentFilter = 'all';
 let searchQuery = '';
-let deferredInstallPrompt = null;
 let toastTimer = null;
 let isExpensesUnlocked = false;
 
@@ -61,8 +59,6 @@ const exportJsonBtn = document.getElementById('exportJsonBtn');
 const importJsonInput = document.getElementById('importJsonInput');
 const resetDataBtn = document.getElementById('resetDataBtn');
 
-const shareWaBtn = document.getElementById('shareWaBtn');
-const installBtn = document.getElementById('installBtn');
 const navButtons = document.querySelectorAll('.nav-btn');
 const tabPanels = document.querySelectorAll('.tab-panel');
 
@@ -559,41 +555,7 @@ resetDataBtn.addEventListener('click', () => {
   }
 });
 
-// Share WhatsApp Summary
-shareWaBtn.addEventListener('click', async () => {
-  const report = buildWhatsAppReport(state);
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: state.className, text: report });
-      return;
-    }
-  } catch {
-    // Fallback to clipboard
-  }
-
-  try {
-    await navigator.clipboard.writeText(report);
-    showToast('Rekap WA disalin ke clipboard');
-  } catch {
-    prompt('Salin laporan ini untuk WhatsApp:', report);
-  }
-});
-
-// PWA Install & Service Worker
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredInstallPrompt = e;
-  installBtn.classList.remove('hidden');
-});
-
-installBtn.addEventListener('click', async () => {
-  if (!deferredInstallPrompt) return;
-  deferredInstallPrompt.prompt();
-  await deferredInstallPrompt.userChoice;
-  deferredInstallPrompt = null;
-  installBtn.classList.add('hidden');
-});
-
+// Register PWA Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
