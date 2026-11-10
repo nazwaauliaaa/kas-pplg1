@@ -361,8 +361,11 @@ function switchTab(target) {
   tabPanels.forEach((panel) => panel.classList.toggle('active', panel.id === target));
 }
 
+const LOCKED_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2.5"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>`;
+const UNLOCKED_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2.5"></rect><path d="M8 11V7a4 4 0 0 1 7.6-1.7"></path></svg>`;
+
 function updateExpensesLockUI() {
-  expensesNavIcon.innerHTML = isExpensesUnlocked ? '&#8722;' : '&#128274;';
+  expensesNavIcon.innerHTML = isExpensesUnlocked ? UNLOCKED_ICON_SVG : LOCKED_ICON_SVG;
 }
 
 // Navigation tabs

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kas-kelas-v5';
+const CACHE_NAME = 'kas-kelas-v6';
 const ASSETS = [
   './',
   './index.html',

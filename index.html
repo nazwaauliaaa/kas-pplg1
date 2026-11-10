@@ -101,7 +101,11 @@
           <div class="treasurer-banner">
             <span>Mode Bendahara Terbuka</span>
             <button type="button" class="btn-mini" id="lockExpensesBtn">
-              &#128274; Kunci Kembali
+              <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="4" y="11" width="16" height="10" rx="2.5"></rect>
+                <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+              </svg>
+              Kunci Kembali
             </button>
           </div>
           <div class="card">
@@ -217,15 +221,29 @@
 
       <nav class="bottom-nav" aria-label="Menu Utama">
         <button type="button" class="nav-btn active" data-tab="tabChecklist">
-          <span class="nav-icon">&#10003;</span>
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5"></path>
+            </svg>
+          </span>
           <span>Ceklis Kas</span>
         </button>
         <button type="button" class="nav-btn" data-tab="tabExpenses" id="expensesNavBtn">
-          <span class="nav-icon" id="expensesNavIcon">&#128274;</span>
+          <span class="nav-icon" id="expensesNavIcon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="11" width="16" height="10" rx="2.5"></rect>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+            </svg>
+          </span>
           <span>Pengeluaran</span>
         </button>
         <button type="button" class="nav-btn" data-tab="tabSettings">
-          <span class="nav-icon">&#9881;</span>
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.77 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"></path>
+            </svg>
+          </span>
           <span>Siswa & Data</span>
         </button>
       </nav>
@@ -253,7 +271,13 @@
     <!-- MODAL PASSWORD BENDAHARA -->
     <dialog id="treasurerAuthModal" class="modal">
       <form method="dialog" id="treasurerAuthForm" class="modal-card">
-        <h3>&#128274; Khusus Bendahara</h3>
+        <h3 class="modal-title-icon">
+          <svg class="inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4" y="11" width="16" height="10" rx="2.5"></rect>
+            <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+          </svg>
+          Khusus Bendahara
+        </h3>
         <p class="modal-desc">
           Masukkan password bendahara untuk membuka dan mengedit menu Pengeluaran.
         </p>
