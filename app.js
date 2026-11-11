@@ -71,9 +71,6 @@ const settingsForm = document.getElementById('settingsForm');
 const classNameInput = document.getElementById('classNameInput');
 const defaultFeeInput = document.getElementById('defaultFeeInput');
 const deleteActiveWeekBtn = document.getElementById('deleteActiveWeekBtn');
-const exportJsonBtn = document.getElementById('exportJsonBtn');
-const importJsonInput = document.getElementById('importJsonInput');
-const resetDataBtn = document.getElementById('resetDataBtn');
 
 const navButtons = document.querySelectorAll('.nav-btn');
 const tabPanels = document.querySelectorAll('.tab-panel');
@@ -647,40 +644,6 @@ deleteActiveWeekBtn.addEventListener('click', () => {
   if (confirm(`Hapus periode "${activeWeek?.label}"?`)) {
     saveAndRender(deleteWeek(state, state.activeWeekId));
     showToast('Periode minggu dihapus');
-  }
-});
-
-// Backup & Restore JSON
-exportJsonBtn.addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `backup-kas-kelas-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('File backup diunduh');
-});
-
-importJsonInput.addEventListener('change', async (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  try {
-    const text = await file.text();
-    const parsed = JSON.parse(text);
-    saveAndRender(normalizeState(parsed));
-    showToast('Data berhasil dipulihkan');
-  } catch {
-    showToast('File backup tidak valid');
-  } finally {
-    importJsonInput.value = '';
-  }
-});
-
-resetDataBtn.addEventListener('click', () => {
-  if (confirm('Reset semua data kas dan kembalikan ke contoh awal?')) {
-    saveAndRender(createInitialState());
-    showToast('Data direset');
   }
 });
 
