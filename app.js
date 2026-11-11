@@ -40,6 +40,7 @@ const totalExpenseEl = document.getElementById('totalExpense');
 const weekSelect = document.getElementById('weekSelect');
 const prevWeekBtn = document.getElementById('prevWeekBtn');
 const nextWeekBtn = document.getElementById('nextWeekBtn');
+const deleteWeekQuickBtn = document.getElementById('deleteWeekQuickBtn');
 const openNewWeekBtn = document.getElementById('openNewWeekBtn');
 const activeWeekMetaEl = document.getElementById('activeWeekMeta');
 const weekProgressTextEl = document.getElementById('weekProgressText');
@@ -177,10 +178,12 @@ function render() {
   renderExpenses();
   renderStudentsManage();
 
-  // Settings values
+  // Settings & quick week delete values
   classNameInput.value = state.className;
   defaultFeeInput.value = String(state.defaultFee);
-  deleteActiveWeekBtn.disabled = state.weeks.length <= 1;
+  const canDeleteWeek = state.weeks.length > 1;
+  deleteActiveWeekBtn.disabled = !canDeleteWeek;
+  deleteWeekQuickBtn.disabled = !canDeleteWeek;
 }
 
 function renderChecklist(activeWeek, weekFee) {
@@ -492,6 +495,8 @@ treasurerAuthForm.addEventListener('submit', (e) => {
       switchTab(target.tab);
     } else if (target?.type === 'newWeek') {
       openNewWeekDialog();
+    } else if (target?.type === 'deleteWeek') {
+      handleDeleteActiveWeek();
     }
     render();
     showToast('Mode Bendahara aktif');
@@ -530,7 +535,22 @@ nextWeekBtn.addEventListener('click', () => {
   }
 });
 
-// New week modal
+// New & Delete week
+function handleDeleteActiveWeek() {
+  if (state.weeks.length <= 1) return;
+  if (!isTreasurerUnlocked) {
+    openTreasurerAuth({ type: 'deleteWeek' });
+    return;
+  }
+  const activeWeek = state.weeks.find((w) => w.id === state.activeWeekId);
+  if (confirm(`Hapus periode "${activeWeek?.label}"?`)) {
+    saveAndRender(deleteWeek(state, state.activeWeekId));
+    showToast('Periode minggu dihapus');
+  }
+}
+
+deleteWeekQuickBtn.addEventListener('click', handleDeleteActiveWeek);
+
 openNewWeekBtn.addEventListener('click', () => {
   if (!isTreasurerUnlocked) {
     openTreasurerAuth({ type: 'newWeek' });
@@ -638,14 +658,7 @@ settingsForm.addEventListener('submit', (e) => {
   showToast('Pengaturan disimpan');
 });
 
-deleteActiveWeekBtn.addEventListener('click', () => {
-  const activeWeek = state.weeks.find((w) => w.id === state.activeWeekId);
-  if (state.weeks.length <= 1) return;
-  if (confirm(`Hapus periode "${activeWeek?.label}"?`)) {
-    saveAndRender(deleteWeek(state, state.activeWeekId));
-    showToast('Periode minggu dihapus');
-  }
-});
+deleteActiveWeekBtn.addEventListener('click', handleDeleteActiveWeek);
 
 // Cloud Sync (Netlify Database / Firebase Firestore)
 const SYNC_STATUS_LABELS = {

@@ -186,7 +186,31 @@ body {
 .week-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+.btn-icon-danger {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #fecaca;
+  background: var(--danger-soft);
+  color: var(--danger);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.btn-icon-danger svg {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-icon-danger:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .btn-circle {
