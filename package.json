@@ -1,0 +1,14 @@
+{
+  "name": "kas-pplg1",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test tests/kas-logic.test.mjs"
+  },
+  "dependencies": {
+    "@netlify/database": "^2.0.3",
+    "@netlify/functions": "^6.1.1"
+  }
+}

@@ -1,10 +1,11 @@
-const CACHE_NAME = 'kas-kelas-v9';
+const CACHE_NAME = 'kas-kelas-v10';
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
   './app.js',
   './kas-logic.js',
+  './cloud-sync.js',
   './firebase-config.js',
   './firebase-sync.js',
   './manifest.webmanifest',
@@ -34,6 +35,7 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/api/')) return;
 
   event.respondWith(
     caches.match(event.request).then((cached) => {

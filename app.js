@@ -16,13 +16,14 @@ import {
   formatRupiah,
   verifyTreasurerPassword,
 } from './kas-logic.js';
-import { createCloudSync } from './firebase-sync.js';
+import { createSharedSync } from './cloud-sync.js';
 
 let state = loadState();
 let currentFilter = 'all';
 let searchQuery = '';
 let toastTimer = null;
 let isTreasurerUnlocked = false;
+let activeTreasurerPassword = '';
 let pendingAuthTarget = null;
 let cloudSync = null;
 
@@ -128,7 +129,7 @@ function saveAndRender(nextState) {
   persistLocal(nextState);
   render();
   if (cloudSync?.enabled) {
-    cloudSync.pushState(state);
+    cloudSync.pushState(state, activeTreasurerPassword);
   }
 }
 
@@ -442,6 +443,7 @@ function openTreasurerAuth(target = null) {
 
 function lockTreasurerMode() {
   isTreasurerUnlocked = false;
+  activeTreasurerPassword = '';
   updateTreasurerLockUI();
   switchTab('tabChecklist');
   render();
@@ -478,12 +480,14 @@ treasurerModeBtn.addEventListener('click', () => {
 
 treasurerAuthForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  if (verifyTreasurerPassword(treasurerPasswordInput.value)) {
+  const enteredPassword = treasurerPasswordInput.value;
+  if (verifyTreasurerPassword(enteredPassword)) {
     isTreasurerUnlocked = true;
+    activeTreasurerPassword = enteredPassword;
     updateTreasurerLockUI();
     treasurerAuthModal.close();
     if (cloudSync?.enabled && !cloudSync.hasRemoteDoc()) {
-      cloudSync.pushState(state);
+      cloudSync.pushState(state, activeTreasurerPassword);
     }
     const target = pendingAuthTarget;
     pendingAuthTarget = null;
@@ -680,7 +684,7 @@ resetDataBtn.addEventListener('click', () => {
   }
 });
 
-// Cloud Sync (Firebase Firestore)
+// Cloud Sync (Netlify Database / Firebase Firestore)
 const SYNC_STATUS_LABELS = {
   local: '• Lokal',
   connecting: '• Menghubungkan...',
@@ -688,10 +692,11 @@ const SYNC_STATUS_LABELS = {
   saving: '• Menyimpan...',
   synced: '• Live Sync',
   offline: '• Offline',
+  'auth-error': '• Password Ditolak',
 };
 
 async function initCloudSync() {
-  cloudSync = await createCloudSync({
+  cloudSync = await createSharedSync({
     onStatusChange: (status) => {
       syncStatusText.textContent = SYNC_STATUS_LABELS[status] || '';
     },

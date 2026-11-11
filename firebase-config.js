@@ -14,3 +14,4 @@ export const FIREBASE_CONFIG = null;
 
 export const FIREBASE_COLLECTION = 'kas_kelas';
 export const FIREBASE_DOC_ID = 'pplg1';
+
