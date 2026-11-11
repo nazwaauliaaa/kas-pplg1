@@ -152,8 +152,9 @@ test('formatRupiah, normalizeState migration, and WhatsApp report work properly'
   assert.match(report, /Rp600\.000/);
 });
 
-test('verifyTreasurerPassword accepts only bendahara123', () => {
-  assert.equal(verifyTreasurerPassword('bendahara123'), true);
+test('verifyTreasurerPassword accepts only bendahara.pplg1#', () => {
+  assert.equal(verifyTreasurerPassword('bendahara.pplg1#'), true);
+  assert.equal(verifyTreasurerPassword('bendahara123'), false);
   assert.equal(verifyTreasurerPassword('salah'), false);
   assert.equal(verifyTreasurerPassword(''), false);
 });

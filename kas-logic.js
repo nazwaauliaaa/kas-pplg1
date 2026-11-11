@@ -1,7 +1,7 @@
 export const DEFAULT_FEE = 2000;
 export const DEFAULT_CARRYOVER_AMOUNT = 600000;
 export const STORAGE_KEY = 'kas_kelas_data_v2';
-export const TREASURER_PASSWORD = 'bendahara123';
+export const TREASURER_PASSWORD = 'bendahara.pplg1#';
 
 /**
  * Checks whether the supplied password matches the treasurer password.
